@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import AppNav from '@/components/layout/AppNav'
 import { Workbook, Profile } from '@/types'
@@ -179,15 +178,18 @@ function WorkbookGrid({ workbooks, onToggleStar, onDelete, formatDate }: {
   onDelete: (id: string) => void
   formatDate: (d: string) => string
 }) {
+  const router = useRouter()
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
       {workbooks.map(wb => (
-        <div key={wb.id} style={{
-          background: 'var(--surface)', border: '1px solid var(--border2)',
-          borderRadius: 12, overflow: 'hidden', position: 'relative',
-          transition: 'border-color 0.2s, transform 0.2s',
-          cursor: 'pointer',
-        }}
+        <div key={wb.id}
+          onClick={() => router.push(`/sheet/${wb.id}`)}
+          style={{
+            background: 'var(--surface)', border: '1px solid var(--border2)',
+            borderRadius: 12, overflow: 'hidden', position: 'relative',
+            transition: 'border-color 0.2s, transform 0.2s',
+            cursor: 'pointer',
+          }}
           onMouseEnter={e => {
             (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)'
             ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'
@@ -198,26 +200,22 @@ function WorkbookGrid({ workbooks, onToggleStar, onDelete, formatDate }: {
           }}
         >
           {/* Preview area */}
-          <Link href={`/sheet/${wb.id}`} style={{ textDecoration: 'none', display: 'block' }}>
-            <div style={{
-              height: 100, background: 'var(--surface2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              borderBottom: '1px solid var(--border)',
-            }}>
-              <FileSpreadsheet size={32} color="var(--text3)" />
-            </div>
-          </Link>
+          <div style={{
+            height: 100, background: 'var(--surface2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderBottom: '1px solid var(--border)',
+          }}>
+            <FileSpreadsheet size={32} color="var(--text3)" />
+          </div>
 
           {/* Info */}
           <div style={{ padding: '12px 14px' }}>
-            <Link href={`/sheet/${wb.id}`} style={{ textDecoration: 'none' }}>
-              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: 'var(--text)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {wb.name}
-              </div>
-              <div style={{ fontFamily: 'var(--font-heading)', fontSize: 11, color: 'var(--text3)' }}>
-                Updated {formatDate(wb.updated_at)}
-              </div>
-            </Link>
+            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: 'var(--text)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {wb.name}
+            </div>
+            <div style={{ fontFamily: 'var(--font-heading)', fontSize: 11, color: 'var(--text3)' }}>
+              Updated {formatDate(wb.updated_at)}
+            </div>
           </div>
 
           {/* Actions */}
