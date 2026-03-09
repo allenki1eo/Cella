@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -17,7 +17,7 @@ import { Sun, Moon, Sparkles, PanelRight, ArrowLeft } from 'lucide-react'
 export default function SheetPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const { theme, toggleTheme } = useThemeContext()
 
   const [workbook, setWorkbook] = useState<Workbook | null>(null)
@@ -25,26 +25,36 @@ export default function SheetPage() {
   const [activeSheetId, setActiveSheetId] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [aiOpen, setAiOpen] = useState(true)
   const [chartOpen, setChartOpen] = useState(false)
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { router.push('/login'); return }
 
-      const [{ data: wb }, { data: sheetList }, { data: prof }] = await Promise.all([
-        supabase.from('workbooks').select('*').eq('id', id).single(),
-        supabase.from('sheets').select('*').eq('workbook_id', id).order('position'),
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-      ])
+        const [{ data: wb, error: wbErr }, { data: sheetList }, { data: prof }] = await Promise.all([
+          supabase.from('workbooks').select('*').eq('id', id).single(),
+          supabase.from('sheets').select('*').eq('workbook_id', id).order('position'),
+          supabase.from('profiles').select('*').eq('id', user.id).single(),
+        ])
 
-      if (!wb) { router.push('/dashboard'); return }
-      setWorkbook(wb)
-      setSheets(sheetList || [])
-      if (sheetList && sheetList.length > 0) setActiveSheetId(sheetList[0].id)
-      setProfile(prof)
-      setLoading(false)
+        if (wbErr || !wb) {
+          setLoadError('Could not load workbook. It may have been deleted or you may not have access.')
+          setLoading(false)
+          return
+        }
+        setWorkbook(wb)
+        setSheets(sheetList || [])
+        if (sheetList && sheetList.length > 0) setActiveSheetId(sheetList[0].id)
+        setProfile(prof)
+        setLoading(false)
+      } catch {
+        setLoadError('Failed to connect. Check your network connection.')
+        setLoading(false)
+      }
     }
     load()
   }, [id, router, supabase])
@@ -108,6 +118,19 @@ export default function SheetPage() {
             }} />
           ))}
         </div>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div style={{ height: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <p style={{ fontFamily: 'var(--font-heading)', color: 'var(--text2)', fontSize: 14 }}>{loadError}</p>
+        <button onClick={() => router.push('/dashboard')} style={{
+          background: 'var(--accent)', color: '#fff', border: 'none',
+          borderRadius: 8, padding: '9px 18px', cursor: 'pointer',
+          fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 13,
+        }}>Back to dashboard</button>
       </div>
     )
   }

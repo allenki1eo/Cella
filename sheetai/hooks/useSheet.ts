@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { SheetData, CellData, CellWrite } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 
@@ -15,6 +15,14 @@ interface HistoryEntry {
 
 export function useSheet({ sheetId, initialData }: UseSheetProps) {
   const [data, setData] = useState<SheetData>(initialData)
+
+  // Reinitialize when sheetId changes (sheet switch or initial load completing)
+  useEffect(() => {
+    setData(initialData)
+    setHistory([{ data: initialData, description: 'Initial' }])
+    setHistoryIndex(0)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheetId])
   const [selectedCell, setSelectedCell] = useState('A1')
   const [selectedRange, setSelectedRange] = useState<string[]>([])
   const [editingCell, setEditingCell] = useState<string | null>(null)

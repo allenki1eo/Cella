@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AppNav from '@/components/layout/AppNav'
@@ -8,7 +8,7 @@ import { Plus, Star, Trash2, FileSpreadsheet, Clock, Search } from 'lucide-react
 
 export default function DashboardPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [workbooks, setWorkbooks] = useState<Workbook[]>([])
   const [loading, setLoading] = useState(true)
